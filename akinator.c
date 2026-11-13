@@ -8,6 +8,7 @@
 /*
 писать nill если нет листьев
 если освобождаем структуру через free освобождаются ли все ее динамические переменные? -- строка 178
+разделить на h
 */
 
 typedef char* elem_t;
@@ -54,7 +55,11 @@ struct Tree_Node_t*   Load_Tree_From_Buffer  (char** ptr, struct Tree_Node_t* pa
 
 
 int                   Play_Akinator          (struct Tree_info* main_tree);
+void                  Answer_No              (struct Tree_info* main_tree, struct Tree_Node_t* current);
+void                  Running_Tree           (struct Tree_info* main_tree, struct Tree_Node_t** current);
 
+
+void clear_buffer ();
 
 
 int main()
@@ -64,12 +69,17 @@ int main()
     char* buffer = NULL;
 
 
-    int size = ReadFromFile ("data_info", &buffer);
+
+    int size = ReadFromFile ("data_info.txt", &buffer);
+
+     
+    printf ("size = %zu, point buffer = %#x\n", size, buffer);
 
     if (size > 0 && buffer != NULL)
     {
         Tree_1.Tree_root = Load_Tree_From_Buffer(&buffer, NULL, &Tree_1); ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         free(buffer);
+        //printf ("I'm here\n");
     }
     
 
@@ -77,18 +87,27 @@ int main()
     {
         Tree_1.Tree_root        = Tree_Constructor (NULL, "It is a animal?", &Tree_1);
         Tree_1.Tree_root->Right = Tree_Constructor (Tree_1.Tree_root, "Cat", &Tree_1);
-        Tree_1.Tree_root->Left  = Tree_Constructor (Tree_1.Tree_root, "Table", &Tree_1);
+        Tree_1.Tree_root->Left  = Tree_Constructor (Tree_1.Tree_root, "Ded", &Tree_1);
         
         printf ("New tree created.\n");
     }
 
 
-    Play_Akinator (&Tree_1);
+    int choise = 1;
+    
+
+    while (choise != 0)
+    {
+        Play_Akinator (&Tree_1);
+        clear_buffer ();
+        printf ("Enter 1 to continue, 0 to stop\n");
+        scanf ("%d", &choise);
+    }
 
     Dump_Graph (Tree_1.Tree_root, Graph_write, &Tree_1);
     Print_tree (Tree_1.Tree_root);
 
-    FILE* file_save = fopen ("data_info", "w");
+    FILE* file_save = fopen ("data_info.txt", "w");
     Save_Tree (Tree_1.Tree_root, file_save);
     fclose (file_save);
     
@@ -254,7 +273,7 @@ struct Tree_Node_t*   Slap_left               (struct Tree_Node_t* parrent_tree,
 
 int                   ReadFromFile            (const char* name_file, char** buffer)
 {
-    FILE* data_info = fopen(name_file, "rb");
+    FILE* data_info = fopen(name_file, "r");
 
     if (data_info == NULL)
     {
@@ -289,20 +308,22 @@ void                  Save_Tree               (struct Tree_Node_t* node, FILE* f
     
     fprintf(file_save, ") ");
 
-    printf("\nTree saved.\n");
+    //printf("\nTree saved.\n");
 }
 
-struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree)
+struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree) //divide on fuction; optimize parser
 {
-    while (**ptr == ' ' || **ptr == '\n' || **ptr == '\r' || **ptr == '\t') 
+    while (**ptr == ' ' || **ptr == '\n') 
         (*ptr)++;
 
-    if (**ptr == '\0') return NULL;
+    if (**ptr == '\0') 
+        return NULL;
 
     if (**ptr == '(') 
     {
         (*ptr)++;
-        while (**ptr == ' ' || **ptr == '\n' || **ptr == '\r' || **ptr == '\t') (*ptr)++;
+        while (**ptr == ' ' || **ptr == '\n') 
+            (*ptr)++;
 
         if (**ptr == ')') 
         {
@@ -320,21 +341,21 @@ struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* p
         }
         buffer[i] = '\0';
 
-        while (i > 0 && (buffer[i-1] == ' ' || buffer[i-1] == '\n' || buffer[i-1] == '\r' || buffer[i-1] == '\t')) 
+        while (i > 0 && (buffer[i-1] == ' ' || buffer[i-1] == '\n')) 
         {
             buffer[i-1] = '\0';
             i--;
-    }
-
+        }
+    
     struct Tree_Node_t* node = Tree_Constructor(parrent, buffer, main_tree);
 
-    while (**ptr == ' ' || **ptr == '\n' || **ptr == '\r' || **ptr == '\t') 
+    while (**ptr == ' ') 
         (*ptr)++;
 
     node->Left  = Load_Tree_From_Buffer(ptr, node, main_tree);
     node->Right = Load_Tree_From_Buffer(ptr, node, main_tree);
 
-    while (**ptr == ' ' || **ptr == '\n' || **ptr == '\r' || **ptr == '\t') 
+    while (**ptr == ' ' || **ptr == '\n') 
         (*ptr)++;
 
     if (**ptr == ')') 
@@ -347,58 +368,100 @@ struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* p
     return NULL;
 }
 
+/*struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree)
+{
+    assert (ptr != NULL);
+    assert (main_tree != NULL);
+
+    char string[25] = " ";
+
+    while (*ptr != '(')
+    {
+        *ptr ++;
+    }
+
+    int i = 0;
+    while (*ptr != '(' || *ptr != '\n' || *ptr != '\0' || *ptr != ')' || *ptr != ' ')
+    {
+        string[i] = *(*ptr++);
+
+    }
+    
+
+} */
 
 int                   Play_Akinator           (struct Tree_info* main_tree)
 {
     struct Tree_Node_t* current = main_tree->Tree_root;
     char answer[10] = {0};
 
-    while (current->Left != NULL || current->Right != NULL) 
-    {
-        printf("%s (yes/no): ", current->data);
-        scanf("%9s", answer);
-        
-        if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") == 0) 
-        {
-            if (current->Right != NULL) current = current->Right; 
-        } 
-        else 
-        {
-            if (current->Left != NULL) current = current->Left;
-        }
-    }
+    Running_Tree (main_tree, &current);
 
     printf("Is it %s? (yes/no): ", current->data);
     scanf("%9s", answer);
 
     if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") == 0) 
     {
-        printf("Hooray! I guessed it!\n");
+        printf("I win\n");
     } 
     else 
     {
-        char new_answer[256] = {0};
-        char new_question[256] = {0};
-        
-        printf("I give up. What did you guess? ");
-        scanf(" %255[^\n]", new_answer); 
-
-        printf("What question distinguishes %s from %s? (yes for %s)\n", 
-               new_answer, current->data, new_answer);
-        scanf(" %255[^\n]", new_question);
-
-        char* old_answer_text = current->data;
-
-        current->data = calloc(strlen(new_question) + 1, sizeof(char));
-        strcpy(current->data, new_question);
-
-        current->Right = Tree_Constructor(current, new_answer, main_tree);
-        current->Left  = Tree_Constructor(current, old_answer_text, main_tree);
-        
-        free(old_answer_text); 
-
-        printf("Thank you! I will remember that.\n");
+        Answer_No (main_tree, current);
     }
 
     return 0;
+}
+
+
+void                  Answer_No               (struct Tree_info* main_tree, struct Tree_Node_t* current)
+{
+    char new_answer[256] = {0};
+    char new_question[256] = {0};
+    
+    printf("What it? ");
+    scanf(" %s", new_answer); 
+
+    printf("What question diference %s from %s? (yes for %s)\n", 
+            new_answer, current->data, new_answer);
+    scanf(" %s", new_question);
+
+    char* old_answer_text = current->data;
+
+    current->data = calloc(strlen(new_question) + 1, sizeof(char));
+    strcpy(current->data, new_question);
+
+    current->Right = Tree_Constructor(current, new_answer, main_tree);
+    current->Left  = Tree_Constructor(current, old_answer_text, main_tree);
+    
+    free (old_answer_text); 
+
+    printf ("Thank you! I will remember that.\n");
+}
+
+void                  Running_Tree            (struct Tree_info* main_tree, struct Tree_Node_t** current)
+{
+    char answer[10] = {0};
+
+    while ((*current)->Left != NULL || (*current)->Right != NULL) 
+    {
+        printf("%s (yes/no): ", (*current)->data);
+        scanf("%9s", answer);
+        
+        if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") == 0) 
+        {
+            if ((*current)->Right != NULL) 
+                (*current) = (*current)->Right; 
+        } 
+        else 
+        {
+            if ((*current)->Left != NULL) 
+                (*current) = (*current)->Left;
+        }
+    }
+}
+
+void clear_buffer ()
+{
+    while (getchar () != '\n')
+        continue;
 }
