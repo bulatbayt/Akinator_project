@@ -37,9 +37,8 @@ int                  Tree_Verificetor (struct Tree_Node_t* parrent_tree, struct 
 
 struct Tree_Node_t*  Tree_Constructor (struct Tree_Node_t* parrent_tree, elem_t data, struct Tree_info* main_tree);
 void                 Tree_Destructor  (struct Tree_Node_t* node); // название tree
-/*
-нужно оббежать все дерево начиная с листьев, освобождая их, если освобождать родительский -> дочерние станут недоступны
-*/
+
+
 struct Tree_Node_t*  Add        (struct Tree_Node_t* parrent_tree, elem_t data, struct Tree_info* main_tree);
 struct Tree_Node_t*  Slap_right (struct Tree_Node_t* parrent_tree, elem_t data, struct Tree_info* main_tree);
 struct Tree_Node_t*  Slap_left  (struct Tree_Node_t* parrent_tree, elem_t data, struct Tree_info* main_tree);
