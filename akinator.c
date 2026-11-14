@@ -1,60 +1,48 @@
 #include "akinator.h"
-// удаление del
-// сделать интерактивное меню  с выбором сохранения и чтения + exit 
-// выбор с картинками ( можно рейлиб) + можно озвучку
-// проработать выбор 
+#include "color.h"
+/* 
+удаление del --------------------------------------------------------------------achived
+сделать интерактивное меню  с выбором сохранения и чтения + exit 
+выбор с картинками ( можно рейлиб) + можно озвучку
+проработать выбор ( 1 или 0) -----------------------------------------------------achived
+функции add, slap right, slap left, -----------------------------------------------------achived
+парсить то, что пользователь будет вводить скобочки при ответе 
+
+стрелочки зеленые - yes, нет - no -----------------------------------------------------achived
+ */
 int main()
 {
     struct Tree_info Tree_1 = { };
-    FILE* Graph_write = fopen ("dump.dot", "w");
+
     char* buffer = NULL;
-
-
-
-    int size = ReadFromFile ("data_info.txt", &buffer);
-
-     
-    printf ("size = %d, point buffer = %p\n", size, buffer);
-
-    if (size > 0 && buffer != NULL)
-    {
-        Tree_1.Tree_root = Load_Tree_From_Buffer(&buffer, NULL, &Tree_1); ///!!!!!!!!!!!!!!
-        free(buffer);
-    }
-    
-
-    if (Tree_1.Tree_root == NULL)
-    {
-        Tree_1.Tree_root        = Tree_Constructor (NULL, "It is a animal?", &Tree_1);
-        Tree_1.Tree_root->Right = Tree_Constructor (Tree_1.Tree_root, "Cat", &Tree_1);
-        Tree_1.Tree_root->Left  = Tree_Constructor (Tree_1.Tree_root, "Ded", &Tree_1);
-        
-        printf ("New tree created.\n");
-    }
-
+    Upload_Data (&buffer, &Tree_1);
 
     int choise = 1;
-    
-
     while (choise != 0)
     {
         Play_Akinator (&Tree_1);
-        clear_buffer ();
-        printf ("Enter 1 to continue, 0 to stop\n");
-        scanf ("%d", &choise);
+        printf ("Enter 1 to continue// 0 to stop\n");
+        if (scanf ("%d", &choise) != 1)
+        {
+            continue;
+        }
     }
 
+//    Delete (&Tree_1, "Table");    
+
+    FILE* Graph_write = fopen ("dump.dot", "w");
     Dump_Graph (Tree_1.Tree_root, Graph_write, &Tree_1);
     Print_tree (Tree_1.Tree_root);
+    fclose (Graph_write);
+
 
     FILE* file_save = fopen ("data_info.txt", "w");
     Save_Tree (Tree_1.Tree_root, file_save);
     fclose (file_save);
+
     
     Tree_Destructor (Tree_1.Tree_root);
-    fclose (Graph_write);
-
-
+    
     return 0;
 }
 
@@ -71,14 +59,14 @@ int               Dump_Graph                  (struct Tree_Node_t* tree, FILE* g
     fprintf (graph_write, "  node [shape = Mrecord; style = filled;];\n");
     fprintf (graph_write, "  edge [color = darkblue;];\n\n");
 
-    Req_Graph (tree, graph_write, main_tree);
+    Run_Draw (tree, graph_write, main_tree);
 
     fprintf (graph_write, "}");
 
     return 0;
 }
 
-void              Req_Graph                   (struct Tree_Node_t* tree, FILE* graph_write, struct Tree_info* main_tree)
+void              Run_Draw                   (struct Tree_Node_t* tree, FILE* graph_write, struct Tree_info* main_tree)
 {
     assert (graph_write != NULL);
     assert (main_tree != NULL);
@@ -91,21 +79,41 @@ void              Req_Graph                   (struct Tree_Node_t* tree, FILE* g
     if (tree == main_tree->last) 
         fillcolor = "#de781f"; 
 
+    #ifdef ONDEBUG
     fprintf (graph_write,
             "  N%p [label = \"{ %s | %p | Parrents:%p | {<L> %p | <R> %p} }\"; fillcolor = \"%s\"; color = \"#0000FF\"];\n", 
             (void*)tree, tree->data, (void*)tree, (void*)tree->Parrent, (void*)tree->Left, (void*)tree->Right, fillcolor);
 
-    if (tree->Left)  
-        fprintf (graph_write, "  N%p:L -> N%p [dir=both; color =\"#00bc7e\"; arrowsize = 0.7]; \n", (void*)tree, (void*)tree->Left);
+     if (tree->Left)  
+        fprintf (graph_write, "  N%p:L -> N%p [label=\"No\"; dir=both; color =\"#DC143C\"; arrowsize = 0.7]; \n", (void*)tree, (void*)tree->Left);
 
     if (tree->Right) 
-        fprintf (graph_write, "  N%p:R -> N%p [dir=both; color = \"#00bc7e\"; arrowsize = 0.7];\n", (void*)tree, (void*)tree->Right);
+        fprintf (graph_write, "  N%p:R -> N%p [label=\"Yes\";dir=both; color = \"#00bc7e\"; arrowsize = 0.7];\n", (void*)tree, (void*)tree->Right);
     
     if (tree->Left && tree->Right) 
         fprintf (graph_write, "  { rank=same; N%p; N%p; }\n", (void*)tree->Left, (void*)tree->Right);
 
-    Req_Graph (tree->Left, graph_write, main_tree);
-    Req_Graph (tree->Right, graph_write, main_tree);
+    #endif
+
+    #ifndef ONDEBUG
+    fprintf (graph_write,
+            "  N%p [label = \" %s \"; fillcolor = \"%s\"; color = \"#0000FF\"];\n", 
+            (void*)tree, tree->data, fillcolor);
+
+    if (tree->Left)  
+        fprintf (graph_write, "  N%p -> N%p [label=\"No\"; dir=both; color =\"#DC143C\"; arrowsize = 0.7]; \n", (void*)tree, (void*)tree->Left);
+
+    if (tree->Right) 
+        fprintf (graph_write, "  N%p -> N%p [label=\"Yes\";dir=both; color = \"#00bc7e\"; arrowsize = 0.7];\n", (void*)tree, (void*)tree->Right);
+    
+    if (tree->Left && tree->Right) 
+        fprintf (graph_write, "  { rank=same; N%p; N%p; }\n", (void*)tree->Left, (void*)tree->Right);
+
+    #endif
+
+    
+    Run_Draw (tree->Left, graph_write, main_tree);
+    Run_Draw (tree->Right, graph_write, main_tree);
 }
 
 void              Print_tree                  (const struct Tree_Node_t* tree)
@@ -209,7 +217,71 @@ struct Tree_Node_t*   Slap_left               (struct Tree_Node_t* parrent_tree,
     }
 }
 
+int                   Delete                  (struct Tree_info* main_tree, const char* target)
+{
+    assert(main_tree != NULL);
+    assert(target != NULL);
 
+    struct Tree_Node_t* node = Find_Node(main_tree->Tree_root, target);
+
+    if (node == NULL)
+    {
+        printf("Node '%s' not found.\n", target);
+        return -1;
+    }
+
+    int deleted_count = Count_Nodes(node);
+
+    
+    if (node->Parrent == NULL)
+    {
+        main_tree->Tree_root = NULL;
+    }
+    else if (node->Parrent->Left == node)
+    {
+        node->Parrent->Left = NULL;
+    }
+    else if (node->Parrent->Right == node)
+    {
+        node->Parrent->Right = NULL;
+    }
+
+    main_tree->last = node->Parrent;
+    main_tree->number_nodes -= deleted_count;
+
+    
+    Tree_Destructor(node);
+
+    return 0;
+}
+
+
+
+
+void                  Upload_Data             (char** buffer, struct Tree_info* Tree_1)
+{
+    int size = ReadFromFile ("data_info.txt", buffer);
+ 
+//    printf ("size = %d, point buffer = %p\n", size, buffer);
+
+    if (size > 0 && *buffer != NULL)
+    {
+        char* ptr = *buffer;
+        Tree_1->Tree_root = Load_Tree_From_Buffer(&ptr, NULL, Tree_1, 0);
+        free(*buffer);
+    }
+    
+
+    if (Tree_1->Tree_root == NULL) 
+    {
+        Tree_1->Tree_root        = Tree_Constructor (NULL, "It is a animal?", Tree_1);
+        Tree_1->Tree_root->Right = Tree_Constructor (Tree_1->Tree_root, "Cat", Tree_1);
+        Tree_1->Tree_root->Left  = Tree_Constructor (Tree_1->Tree_root, "Ded", Tree_1);
+        
+        printf ("New tree created.\n");
+    }
+
+}
 
 int                   ReadFromFile            (const char* name_file, char** buffer)
 {
@@ -251,7 +323,7 @@ void                  Save_Tree               (struct Tree_Node_t* node, FILE* f
     //printf("\nTree saved.\n");
 }
 
-struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree) //divide to fuction; optimize parser
+struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree, int choise)
 {
     while (**ptr == ' ' || **ptr == '\n') 
         (*ptr)++;
@@ -287,48 +359,33 @@ struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* p
             i--;
         }
     
-    struct Tree_Node_t* node = Tree_Constructor(parrent, buffer, main_tree);
+        struct Tree_Node_t* node = NULL;
+        
+        if (parrent == NULL)
+            node = Tree_Constructor(NULL, buffer, main_tree); 
+        else
+            node = Add(parrent, buffer, main_tree, choise);   
 
-    while (**ptr == ' ') 
-        (*ptr)++;
+        while (**ptr == ' ') 
+            (*ptr)++;
 
-    node->Left  = Load_Tree_From_Buffer(ptr, node, main_tree);
-    node->Right = Load_Tree_From_Buffer(ptr, node, main_tree);
+        node->Left  = Load_Tree_From_Buffer(ptr, node, main_tree, 0);
+        node->Right = Load_Tree_From_Buffer(ptr, node, main_tree, 1);
 
-    while (**ptr == ' ' || **ptr == '\n') 
-        (*ptr)++;
+        while (**ptr == ' ' || **ptr == '\n') 
+            (*ptr)++;
 
-    if (**ptr == ')') 
-        (*ptr)++;
+        if (**ptr == ')') 
+            (*ptr)++;
     
-    return node;
-
+        return node;
     }
 
     return NULL;
 }
 
-/*struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree)
-{
-    assert (ptr != NULL);
-    assert (main_tree != NULL);
 
-    char string[25] = " ";
 
-    while (*ptr != '(')
-    {
-        *ptr ++;
-    }
-
-    int i = 0;
-    while (*ptr != '(' || *ptr != '\n' || *ptr != '\0' || *ptr != ')' || *ptr != ' ')
-    {
-        string[i] = *(*ptr++);
-
-    }
-    
-
-} */
 
 int                   Play_Akinator           (struct Tree_info* main_tree)
 {
@@ -337,10 +394,10 @@ int                   Play_Akinator           (struct Tree_info* main_tree)
 
     Running_Tree (main_tree, &current);
 
-    printf("Is it %s? (yes/No): ", current->data);
+    printf("Is it %s? ("GREEN"yes"RESET_COLOR"/"RED"No"RESET_COLOR"): ", current->data);
     scanf("%9s", answer);
 
-    if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") || strcmp(answer, "Yes") || strcmp(answer, "Y")  == 0) 
+    if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") == 0 || strcmp(answer, "Yes") == 0 || strcmp(answer, "Y")  == 0) 
     {
         printf("I win\n");
     } 
@@ -352,30 +409,30 @@ int                   Play_Akinator           (struct Tree_info* main_tree)
     return 0;
 }
 
-
-void                  Answer_No               (struct Tree_info* main_tree, struct Tree_Node_t* current)
+void                  Answer_No               (struct Tree_info* main_tree, struct Tree_Node_t* current) 
 {
     char new_answer[256] = {0};
     char new_question[256] = {0};
     
-    printf("What it? ");
-    scanf(" %s", new_answer); 
+    clear_buffer();
+    printf("What is it? ");
+    read_line(new_answer, sizeof(new_answer));
 
-    printf("What question diference %s from %s? (yes for %s)\n", 
-            new_answer, current->data, new_answer);
-    scanf(" %s", new_question);
+    printf("What question differentiates %s from %s? (yes for %s)\n", 
+           new_answer, current->data, new_answer);
+    read_line(new_question, sizeof(new_question));
 
     char* old_answer_text = current->data;
 
     current->data = calloc(strlen(new_question) + 1, sizeof(char));
     strcpy(current->data, new_question);
 
-    current->Right = Tree_Constructor(current, new_answer, main_tree);
-    current->Left  = Tree_Constructor(current, old_answer_text, main_tree);
+    Add(current, old_answer_text, main_tree, 0);
+    Add(current, new_answer, main_tree, 1); 
     
-    free (old_answer_text); 
+    free(old_answer_text); 
 
-    printf ("Thank you! I will remember that.\n");
+    printf("Thank you! I will remember that.\n");
 }
 
 void                  Running_Tree            (struct Tree_info* main_tree, struct Tree_Node_t** current)
@@ -384,7 +441,7 @@ void                  Running_Tree            (struct Tree_info* main_tree, stru
 
     while ((*current)->Left != NULL || (*current)->Right != NULL) 
     {
-        printf("%s (yes/no): ", (*current)->data);
+        printf("%s ("GREEN"yes"RESET_COLOR"/"RED"No"RESET_COLOR"): ", (*current)->data);
         scanf("%9s", answer);
         
         if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") == 0) 
@@ -407,4 +464,39 @@ void                  clear_buffer ()
 {
     while (getchar () != '\n')
         continue;
+}
+
+void                  read_line    (char* string, int max_size)
+{
+    int i = 0;
+    int ch = 0;
+    while ((ch = getchar()) != '\n' && ch != EOF) 
+    {
+        if (i < max_size - 1) 
+            string[i++] = (char)ch;
+    }
+    string[i] = '\0';
+}
+
+struct Tree_Node_t*   Find_Node    (struct Tree_Node_t* node, const char* target)
+{
+    if (node == NULL || target == NULL)
+        return NULL;
+
+    if (strcmp(node->data, target) == 0)
+        return node;
+
+    struct Tree_Node_t* found_left = Find_Node(node->Left, target);
+    if (found_left != NULL)
+        return found_left;
+
+    return Find_Node(node->Right, target);
+}
+
+int                   Count_Nodes  (const struct Tree_Node_t* node)
+{
+    if (node == NULL)
+        return 0;
+
+    return 1 + Count_Nodes(node->Left) + Count_Nodes(node->Right);
 }
