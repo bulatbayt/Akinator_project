@@ -1,6 +1,8 @@
 #include "akinator.h"
-
-
+// удаление del
+// сделать интерактивное меню  с выбором сохранения и чтения + exit 
+// выбор с картинками ( можно рейлиб) + можно озвучку
+// проработать выбор 
 int main()
 {
     struct Tree_info Tree_1 = { };
@@ -12,13 +14,12 @@ int main()
     int size = ReadFromFile ("data_info.txt", &buffer);
 
      
-    printf ("size = %zu, point buffer = %#x\n", size, buffer);
+    printf ("size = %d, point buffer = %p\n", size, buffer);
 
     if (size > 0 && buffer != NULL)
     {
-        Tree_1.Tree_root = Load_Tree_From_Buffer(&buffer, NULL, &Tree_1); ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        Tree_1.Tree_root = Load_Tree_From_Buffer(&buffer, NULL, &Tree_1); ///!!!!!!!!!!!!!!
         free(buffer);
-        //printf ("I'm here\n");
     }
     
 
@@ -250,7 +251,7 @@ void                  Save_Tree               (struct Tree_Node_t* node, FILE* f
     //printf("\nTree saved.\n");
 }
 
-struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree) //divide on fuction; optimize parser
+struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree) //divide to fuction; optimize parser
 {
     while (**ptr == ' ' || **ptr == '\n') 
         (*ptr)++;
@@ -336,10 +337,10 @@ int                   Play_Akinator           (struct Tree_info* main_tree)
 
     Running_Tree (main_tree, &current);
 
-    printf("Is it %s? (yes/no): ", current->data);
+    printf("Is it %s? (yes/No): ", current->data);
     scanf("%9s", answer);
 
-    if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") == 0) 
+    if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") || strcmp(answer, "Yes") || strcmp(answer, "Y")  == 0) 
     {
         printf("I win\n");
     } 
@@ -397,9 +398,12 @@ void                  Running_Tree            (struct Tree_info* main_tree, stru
                 (*current) = (*current)->Left;
         }
     }
+
 }
 
-void clear_buffer ()
+
+
+void                  clear_buffer ()
 {
     while (getchar () != '\n')
         continue;
