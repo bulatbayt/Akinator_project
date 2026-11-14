@@ -31,7 +31,7 @@ struct Tree_Node_t
 
 
 int                   Dump_Graph             (struct Tree_Node_t* tree, FILE* graph_write, struct Tree_info* main_tree);
-void                  Req_Graph              (struct Tree_Node_t* tree, FILE* graph_write, struct Tree_info* main_tree);
+void                  Run_Draw              (struct Tree_Node_t* tree, FILE* graph_write, struct Tree_info* main_tree);
 void                  Print_tree             (const struct Tree_Node_t* tree);
 
 
@@ -42,11 +42,13 @@ void                  Tree_Destructor        (struct Tree_Node_t* tree);
 struct Tree_Node_t*   Add                    (struct Tree_Node_t* parrent_tree, elem_t data, struct Tree_info* main_tree, int choise);
 struct Tree_Node_t*   Slap_right             (struct Tree_Node_t* parrent_tree, elem_t data, struct Tree_info* main_tree, int choise);
 struct Tree_Node_t*   Slap_left              (struct Tree_Node_t* parrent_tree, elem_t data, struct Tree_info* main_tree, int choise);
+int                   Delete                 (struct Tree_info* main_tree, const char* target);
 
 
 int                   ReadFromFile           (const char* name_file, char** buffer);
+void                  Upload_Data            (char** buffer, struct Tree_info* Tree_1, const char* database);
 void                  Save_Tree              (struct Tree_Node_t* node, FILE* file_save);
-struct Tree_Node_t*   Load_Tree_From_Buffer  (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree);
+struct Tree_Node_t*   Load_Tree_From_Buffer  (char** ptr, struct Tree_Node_t* parrent, struct Tree_info* main_tree, int choise);
 
 
 int                   Play_Akinator          (struct Tree_info* main_tree);
@@ -55,3 +57,10 @@ void                  Running_Tree           (struct Tree_info* main_tree, struc
 
 
 void                  clear_buffer           ();
+void                  read_line              (char* string, int max_size);
+struct Tree_Node_t*   Find_Node              (struct Tree_Node_t* node, const char* target);
+int                   Count_Nodes            (const struct Tree_Node_t* node);
+void                  clear_string           (char* string);
+
+
+void                  Interactive_menu       (char* database, char* save_file, char** buffer, struct Tree_info* main_tree);
