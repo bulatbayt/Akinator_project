@@ -2,46 +2,27 @@
 #include "color.h"
 /* 
 удаление del --------------------------------------------------------------------achived
-сделать интерактивное меню  с выбором сохранения и чтения + exit 
+сделать интерактивное меню  с выбором файла для сохранения и чтения + exit через switch case выбрать 
 выбор с картинками ( можно рейлиб) + можно озвучку
 проработать выбор ( 1 или 0) -----------------------------------------------------achived
 функции add, slap right, slap left, -----------------------------------------------------achived
-парсить то, что пользователь будет вводить скобочки при ответе 
+парсить то, что пользователь будет вводить скобочки при ответе --------------------------achived
 
 стрелочки зеленые - yes, нет - no -----------------------------------------------------achived
+
+dot запускать через system        -----------------------------------------------------achieved
  */
 int main()
 {
     struct Tree_info Tree_1 = { };
 
     char* buffer = NULL;
-    Upload_Data (&buffer, &Tree_1);
+    char database[256] = "data_info.txt"; // обработать 256 - a waste of memory
+    char save_file[256]     = "data_info.txt"; 
 
-    int choise = 1;
-    while (choise != 0)
-    {
-        Play_Akinator (&Tree_1);
-        printf ("Enter 1 to continue// 0 to stop\n");
-        if (scanf ("%d", &choise) != 1)
-        {
-            continue;
-        }
-    }
-
-//    Delete (&Tree_1, "Table");    
-
-    FILE* Graph_write = fopen ("dump.dot", "w");
-    Dump_Graph (Tree_1.Tree_root, Graph_write, &Tree_1);
-    Print_tree (Tree_1.Tree_root);
-    fclose (Graph_write);
-
-
-    FILE* file_save = fopen ("data_info.txt", "w");
-    Save_Tree (Tree_1.Tree_root, file_save);
-    fclose (file_save);
-
+    Interactive_menu (database, save_file, &buffer, &Tree_1);
     
-    Tree_Destructor (Tree_1.Tree_root);
+    Tree_Destructor  (Tree_1.Tree_root);
     
     return 0;
 }
@@ -258,9 +239,9 @@ int                   Delete                  (struct Tree_info* main_tree, cons
 
 
 
-void                  Upload_Data             (char** buffer, struct Tree_info* Tree_1)
+void                  Upload_Data             (char** buffer, struct Tree_info* Tree_1, const char* database)
 {
-    int size = ReadFromFile ("data_info.txt", buffer);
+    int size = ReadFromFile (database, buffer);
  
 //    printf ("size = %d, point buffer = %p\n", size, buffer);
 
@@ -389,23 +370,33 @@ struct Tree_Node_t*   Load_Tree_From_Buffer   (char** ptr, struct Tree_Node_t* p
 
 int                   Play_Akinator           (struct Tree_info* main_tree)
 {
-    struct Tree_Node_t* current = main_tree->Tree_root;
-    char answer[10] = {0};
-
-    Running_Tree (main_tree, &current);
-
-    printf("Is it %s? ("GREEN"yes"RESET_COLOR"/"RED"No"RESET_COLOR"): ", current->data);
-    scanf("%9s", answer);
-
-    if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") == 0 || strcmp(answer, "Yes") == 0 || strcmp(answer, "Y")  == 0) 
+    int choise = 1;
+    while (choise != 0)
     {
-        printf("I win\n");
-    } 
-    else 
-    {
-        Answer_No (main_tree, current);
+        struct Tree_Node_t* current = main_tree->Tree_root;
+        char answer[10] = {0};
+
+        Running_Tree (main_tree, &current);
+
+        printf("Is it %s? ("GREEN"yes"RESET_COLOR"/"RED"No"RESET_COLOR"): ", current->data);
+        scanf("%9s", answer);
+
+        if (strcmp(answer, "yes") == 0 || strcmp(answer, "y") == 0 || strcmp(answer, "Yes") == 0 || strcmp(answer, "Y")  == 0) 
+        {
+            printf("I win\n");
+        } 
+        else 
+        {
+            Answer_No (main_tree, current);
+        }
+        
+        printf ("Enter 1 to continue// 0 to stop\n");
+        if (scanf ("%d", &choise) != 1)
+        {
+            continue;
+        }
     }
-
+    
     return 0;
 }
 
@@ -472,6 +463,11 @@ void                  read_line    (char* string, int max_size)
     int ch = 0;
     while ((ch = getchar()) != '\n' && ch != EOF) 
     {
+        if (ch == '(') 
+            ch = '['; 
+        else if (ch == ')') 
+            ch = ']';
+
         if (i < max_size - 1) 
             string[i++] = (char)ch;
     }
@@ -500,3 +496,105 @@ int                   Count_Nodes  (const struct Tree_Node_t* node)
 
     return 1 + Count_Nodes(node->Left) + Count_Nodes(node->Right);
 }
+
+void                  clear_string (char* string)
+{
+    for (size_t i = 0; string[i] != '\0'; i++)
+    {
+        string [i] = '\0';
+    }
+}
+
+
+
+void                  Interactive_menu        (char* database, char* save_file, char** buffer, struct Tree_info* main_tree) // выбор для записи картинки  // для удаления элемента// выход 
+{ 
+    int choise = -1;
+    
+    while ( choise != 0)
+    {
+        printf ("\n==============================================Akinator Game==============================================\n\n");
+        printf (YELLOW "mode menu:\n\n" RESET_COLOR);
+        printf (BLUE   "Enter 1:"RESET_COLOR" Choise Database file          (If you do not make a selection, the default one will be used.)\n\n");
+        printf (BLUE   "Enter 2:"RESET_COLOR" Choise file for save database (If you do not make a selection, the default one will be used.)\n\n");
+        printf (BLUE   "Enter 3:"RESET_COLOR" Start Akinator Game\n\n");
+        printf (BLUE   "Enter 4:"RESET_COLOR" Save database \n\n");
+        printf (BLUE   "Enter 5:"RESET_COLOR" Graph Dump Tree\n\n");
+        printf (BLUE   "Enter 6:"RESET_COLOR" Deleete element\n\n");
+        printf (YELLOW "Enter 0:"RESET_COLOR" Exit game\n\n");
+
+        printf ("Your Choise: ");
+
+        while (scanf("%d", &choise) == 0 || (choise <0 ) || choise >6 )
+        {
+            printf ("Please, do correct choise\n");
+        }
+
+    
+        switch (choise)
+        {
+            case 1: 
+            {
+                printf ("Data_base file:\n");
+                clear_string (database);
+                fgets (database, 256, stdin);
+                break;
+            }
+
+            case 2:
+            {
+                printf ("Save file:\n");
+                clear_string (save_file);
+                fgets (save_file, 256, stdin);
+                break;
+            }
+
+            case 3:
+            {
+                printf ("Let's start\n");
+
+                Upload_Data (buffer, main_tree, database);
+
+                Play_Akinator (main_tree);  
+                
+                break;
+            }
+
+            case 4:
+            {
+                FILE* save = fopen (save_file, "w");
+                Save_Tree (main_tree->Tree_root, save);
+                fclose (save);
+                
+                break;
+            }
+
+            case 5:
+            {
+                FILE* Graph_write = fopen ("dump.dot", "w");
+
+                Dump_Graph (main_tree->Tree_root, Graph_write, main_tree);
+                Print_tree (main_tree->Tree_root);             
+
+                fclose (Graph_write);
+
+                system   ("dot -Tpng dump.dot -o dump.png");
+                
+                break;
+            }
+
+            case 6:
+            {
+                printf (RED"Name for Delete: "RESET_COLOR);
+                char target[20];// !!!!!!!!!!!!!!! оптимизировать
+                scanf ("%s", target);
+                clear_buffer;
+                Delete (main_tree, target);
+
+                break;
+            }
+        }
+
+    }
+}  
+
